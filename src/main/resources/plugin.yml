@@ -1,0 +1,9 @@
+name: Toilet
+main: Main
+version: 1.0-SNAPSHOT
+api-version: 1.17
+depend:
+  - Kotlin
+  - KoiSupport
+libraries:
+  - io.github.monun:kommand:2.4.1
