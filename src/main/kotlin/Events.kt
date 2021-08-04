@@ -175,9 +175,9 @@ class Events : Listener {
             if (line1 == "[광산]") {
                 when (line3) {
                     "클릭해서 입장하기" -> {
-                        getSigns().set("joined.${p.uniqueId}", line2)
                         val warpl = getSigns().getLocation("signs.$line2.quit")
                         if (warpl != null && line4 != "-" && lv >= fn) {
+                            getSigns().set("joined.${p.uniqueId}", line2)
                             sign.line(3, Component.text(e.player.name))
                             p.teleportAsync(Location(warpl.world, warpl.x + 0.5, warpl.y, warpl.z + 0.5))
                             sign.line(
@@ -188,6 +188,7 @@ class Events : Listener {
                         } else if (warpl != null && line4 != "-" && lv < fn) {
                             p.msg("입장 조건을 만족하지 않았습니다.")
                         } else if (warpl != null && line4 == "-") {
+                            getSigns().set("joined.${p.uniqueId}", line2)
                             p.teleportAsync(Location(warpl.world, warpl.x + 0.5, warpl.y, warpl.z + 0.5))
                         } else {
                             p.msg("출구가 설정되어 있지 않습니다.")
