@@ -124,6 +124,48 @@ class Events : Listener {
                 getSigns().save(getSignsloc())
             }
         }
+        else if (line1 == "[이동]" && p.hasPermission("admin.setup")) {
+            if (line2 == "") {
+                e.block.breakNaturally()
+                p.msg("이름을 지정해주세요.")
+            } else {
+                val bl = e.block.location
+                when {
+                    listOf("1","2").contains(line2) -> {
+                        if (getSigns().getLocation("gates.$line2.join") != null) {
+                            e.block.breakNaturally()
+                            p.msg("이미 지정되었습니다!")
+                        } else {
+                            getSigns().set("gates.$line2.$line3", bl)
+                            e.line(
+                                0, Component.text("[이동]")
+                                    .color(TextColor.color(85, 255, 255))
+                            )
+                            e.line(
+                                1, Component.text(if (line2 == "1") "-" else "")
+                                    .color(TextColor.color(255, 170, 0))
+                            )
+                            e.line(
+                                2, Component.text("클릭해서 이동하기")
+                                    .color(TextColor.color(85, 255, 85))
+                            )
+                            if (fn > 0 && line4 != "-") {
+                                getSigns().set("gates.$line2.limit",fn)
+                                e.line(
+                                    3, Component.text("Lv.$line4 이상")
+                                )
+                            }
+                            p.msg("$line2 통로 $line3 번 생성 완료!")
+                        }
+                    }
+                    else -> {
+                        e.block.breakNaturally()
+                        p.msg("1번 또는 2번을 적어주세요.. [세번째 줄]")
+                    }
+                }
+                getSigns().save(getSignsloc())
+            }
+        }
     }
 
     @EventHandler
@@ -149,6 +191,14 @@ class Events : Listener {
                 p.msg("제거 완료!")
                 getSigns().save(getSignsloc())
             }
+            else if (line1 == "[이동]"&& p.hasPermission("admin.setup")) {
+                getSigns().set("gates.$line2.$line3",null)
+                if (line4 != "") {
+                    getSigns().set("gates.$line2.limit",null)
+                }
+                p.msg("제거 완료!")
+                getSigns().save(getSignsloc())
+            }
         }
     }
 
@@ -159,7 +209,7 @@ class Events : Listener {
         if (Signs.contains(clb?.type) && e.action == Action.RIGHT_CLICK_BLOCK && e.hand == EquipmentSlot.HAND) {
             val kspFile = Main.ksp.dataFolder["data"]["stats.yml"]
             if (!kspFile.canRead()) {
-                println("스텟 파일 연동에 실패했습니다.")
+                p.msg("스텟 파일 연동에 문제가 있습니다.\n관리자에게 문의하세요.")
             } else {
                 Main.kspYml.load(kspFile)
             }
@@ -216,6 +266,18 @@ class Events : Listener {
                             p.msg("입구가 설정되어 있지 않습니다.")
                         }
                     }
+                }
+                getSigns().save(getSignsloc())
+            }
+            else if (line1 == "[이동]"){
+                val out = if (line3 == "-") 2 else 1
+                val warpl = getSigns().getLocation("signs.$line2.$out")
+                if (warpl != null && lv >= fn) {
+                    p.teleportAsync(Location(warpl.world, warpl.x + 0.5, warpl.y, warpl.z + 0.5))
+                } else if (warpl != null && lv < fn) {
+                    p.msg("이동 조건을 만족하지 않았습니다.")
+                } else {
+                    p.msg("출구가 설정되어 있지 않습니다.")
                 }
                 getSigns().save(getSignsloc())
             }
