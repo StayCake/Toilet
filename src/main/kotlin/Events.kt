@@ -131,7 +131,7 @@ class Events : Listener {
             } else {
                 val bl = e.block.location
                 when {
-                    listOf("1","2").contains(line2) -> {
+                    listOf("1","2").contains(line3) -> {
                         if (getSigns().getLocation("gates.$line2.join") != null) {
                             e.block.breakNaturally()
                             p.msg("이미 지정되었습니다!")
@@ -142,14 +142,14 @@ class Events : Listener {
                                     .color(TextColor.color(85, 255, 255))
                             )
                             e.line(
-                                1, Component.text(if (line2 == "1") "-" else "")
+                                1, Component.text(line2)
                                     .color(TextColor.color(255, 170, 0))
                             )
                             e.line(
-                                2, Component.text("클릭해서 이동하기")
+                                2, Component.text(if (line3 == "1") "- 클릭해서 이동하기 -" else "클릭해서 이동하기")
                                     .color(TextColor.color(85, 255, 85))
                             )
-                            if (fn > 0 && line4 != "-") {
+                            if (fn > 0) {
                                 getSigns().set("gates.$line2.limit",fn)
                                 e.line(
                                     3, Component.text("Lv.$line4 이상")
@@ -192,7 +192,7 @@ class Events : Listener {
                 getSigns().save(getSignsloc())
             }
             else if (line1 == "[이동]"&& p.hasPermission("admin.setup")) {
-                getSigns().set("gates.$line2.$line3",null)
+                getSigns().set("gates.$line2.${if (line3 == "클릭해서 이동하기") 2 else 1}",null)
                 if (line4 != "") {
                     getSigns().set("gates.$line2.limit",null)
                 }
@@ -270,7 +270,7 @@ class Events : Listener {
                 getSigns().save(getSignsloc())
             }
             else if (line1 == "[이동]"){
-                val out = if (line3 == "-") 2 else 1
+                val out = if (line3 == "클릭해서 이동하기") 1 else 2
                 val warpl = getSigns().getLocation("signs.$line2.$out")
                 if (warpl != null && lv >= fn) {
                     p.teleportAsync(Location(warpl.world, warpl.x + 0.5, warpl.y, warpl.z + 0.5))
