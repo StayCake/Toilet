@@ -3,11 +3,12 @@ import hazae41.minecraft.kutils.get
 import net.kyori.adventure.text.Component
 import net.kyori.adventure.text.TextComponent
 import net.kyori.adventure.text.format.TextColor
-import org.bukkit.Bukkit
 import org.bukkit.ChatColor
 import org.bukkit.Location
 import org.bukkit.Material
+import org.bukkit.block.BlockFace
 import org.bukkit.block.Sign
+import org.bukkit.block.data.type.WallSign
 import org.bukkit.configuration.file.FileConfiguration
 import org.bukkit.event.EventHandler
 import org.bukkit.event.Listener
@@ -47,6 +48,16 @@ class Events : Listener {
 
     private fun getSignsloc() : File {
         return Main.signsloc
+    }
+
+    private fun getYaw(side: BlockFace?) : Float {
+        return when (side) {
+            BlockFace.EAST -> -90F
+            BlockFace.WEST -> 90F
+            BlockFace.SOUTH -> 0F
+            BlockFace.NORTH -> 180F
+            else -> 0F
+        }
     }
 
     @EventHandler
@@ -105,13 +116,13 @@ class Events : Listener {
                         } else {
                             getSigns().set("signs.$line2.quit",bl)
                             e.line(0, Component.text("[광산]")
-                                    .color(TextColor.color(85,255,255))
+                                .color(TextColor.color(85,255,255))
                             )
                             e.line(1, Component.text(line2)
-                                    .color(TextColor.color(255,170,0))
+                                .color(TextColor.color(255,170,0))
                             )
                             e.line(2, Component.text("클릭해서 나가기")
-                                    .color(TextColor.color(255,85,85))
+                                .color(TextColor.color(255,85,85))
                             )
                             p.msg("$line2 출구 생성 완료!")
                         }
@@ -226,20 +237,28 @@ class Events : Listener {
                 when (line3) {
                     "클릭해서 입장하기" -> {
                         val warpl = getSigns().getLocation("signs.$line2.quit")
-                        if (warpl != null && line4 != "-" && lv >= fn) {
-                            getSigns().set("joined.${p.uniqueId}", line2)
-                            sign.line(3, Component.text(e.player.name))
-                            p.teleportAsync(Location(warpl.world, warpl.x + 0.5, warpl.y, warpl.z + 0.5))
-                            sign.line(
-                                2, Component.text("사용 중")
-                                    .color(TextColor.color(255, 85, 85))
-                            )
-                            sign.update()
-                        } else if (warpl != null && line4 != "-" && lv < fn) {
-                            p.msg("입장 조건을 만족하지 않았습니다.")
-                        } else if (warpl != null && line4 == "-") {
-                            getSigns().set("joined.${p.uniqueId}", line2)
-                            p.teleportAsync(Location(warpl.world, warpl.x + 0.5, warpl.y, warpl.z + 0.5))
+                        if (warpl != null) {
+                            val wallsign = warpl.block.blockData as WallSign
+                            val face = wallsign.facing
+                            when {
+                                line4 != "-" && lv >= fn -> {
+                                    getSigns().set("joined.${p.uniqueId}", line2)
+                                    sign.line(3, Component.text(e.player.name))
+                                    p.teleportAsync(Location(warpl.world, warpl.x + 0.5, warpl.y, warpl.z + 0.5, getYaw(face), 0F))
+                                    sign.line(
+                                        2, Component.text("사용 중")
+                                            .color(TextColor.color(255, 85, 85))
+                                    )
+                                    sign.update()
+                                }
+                                line4 != "-" && lv < fn -> {
+                                    p.msg("입장 조건을 만족하지 않았습니다.")
+                                }
+                                line4 == "-" -> {
+                                    getSigns().set("joined.${p.uniqueId}", line2)
+                                    p.teleportAsync(Location(warpl.world, warpl.x + 0.5, warpl.y, warpl.z + 0.5, getYaw(face), 0F))
+                                }
+                            }
                         } else {
                             p.msg("출구가 설정되어 있지 않습니다.")
                         }
@@ -253,11 +272,13 @@ class Events : Listener {
                         val limit = getSigns().getInt("signs.$line2.limit")
                         val persistent = getSigns().getBoolean("signs.$line2.persistent")
                         if (warpl != null) {
+                            val wallsign = warpl.block.blockData as WallSign
+                            val face = wallsign.facing
                             val entrysign = warpl.block.state as Sign
                             entrysign.line(3, Component.text(""))
-                            p.teleportAsync(Location(warpl.world,warpl.x+0.5,warpl.y,warpl.z+0.5))
+                            p.teleportAsync(Location(warpl.world,warpl.x+0.5,warpl.y,warpl.z+0.5, getYaw(face), 0F))
                             entrysign.line(2, Component.text("클릭해서 입장하기")
-                                    .color(TextColor.color(85,255,85))
+                                .color(TextColor.color(85,255,85))
                             )
                             if (limit > 0) entrysign.line(3, Component.text("Lv.$limit 이상"))
                             if (persistent) entrysign.line(3, Component.text("-"))
@@ -272,12 +293,18 @@ class Events : Listener {
             else if (line1 == "[이동]"){
                 val out = if (line3 == "클릭해서 이동하기") 1 else 2
                 val warpl = getSigns().getLocation("gates.$line2.$out")
-                if (warpl != null && lv >= fn) {
-                    p.teleportAsync(Location(warpl.world, warpl.x + 0.5, warpl.y, warpl.z + 0.5))
-                } else if (warpl != null && lv < fn) {
-                    p.msg("이동 조건을 만족하지 않았습니다.")
-                } else {
-                    p.msg("출구가 설정되어 있지 않습니다.")
+                when {
+                    warpl != null && lv >= fn -> {
+                        val wallsign = warpl.block.blockData as WallSign
+                        val face = wallsign.facing
+                        p.teleportAsync(Location(warpl.world, warpl.x + 0.5, warpl.y, warpl.z + 0.5, getYaw(face), 0F))
+                    }
+                    warpl != null && lv < fn -> {
+                        p.msg("이동 조건을 만족하지 않았습니다.")
+                    }
+                    else -> {
+                        p.msg("출구가 설정되어 있지 않습니다.")
+                    }
                 }
                 getSigns().save(getSignsloc())
             }
