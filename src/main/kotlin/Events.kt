@@ -271,7 +271,7 @@ class Events : Listener {
             }
             else if (line1 == "[이동]"){
                 val out = if (line3 == "클릭해서 이동하기") 1 else 2
-                val warpl = getSigns().getLocation("signs.$line2.$out")
+                val warpl = getSigns().getLocation("gates.$line2.$out")
                 if (warpl != null && lv >= fn) {
                     p.teleportAsync(Location(warpl.world, warpl.x + 0.5, warpl.y, warpl.z + 0.5))
                 } else if (warpl != null && lv < fn) {
